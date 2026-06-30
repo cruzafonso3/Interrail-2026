@@ -1,0 +1,1044 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Interrail 2026 · Viena → Adriático → Madrid</title>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --night:#0E1330;
+    --night-2:#161D45;
+    --paper:#FBF6EC;
+    --paper-2:#F2EADA;
+    --ink:#1A1E33;
+    --sea:#0FA39F;
+    --sea-deep:#08605E;
+    --coral:#FF5A5F;
+    --gold:#FFB13C;
+    --violet:#7B5EA7;
+    --line:#D9CFBC;
+    --shadow:rgba(14,19,48,.10);
+
+    /* cores por cidade */
+    --c-viena:#E8A33D;
+    --c-praga:#D7504D;
+    --c-lyon:#5B6CB8;
+    --c-budapeste:#1F9C8E;
+    --c-balaton:#42B3AC;
+    --c-belgrado:#B55A4E;
+    --c-noturno:#7B5EA7;
+    --c-budva:#119C8B;
+    --c-split:#E07A4A;
+    --c-zagreb:#3FA2B0;
+    --c-madrid:#D64545;
+
+    --display:"Bricolage Grotesque", system-ui, sans-serif;
+    --body:"Inter", system-ui, sans-serif;
+    --mono:"Space Mono", ui-monospace, monospace;
+  }
+
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    font-family:var(--body);
+    color:var(--ink);
+    background:var(--paper);
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+  @media (prefers-reduced-motion: reduce){
+    html{scroll-behavior:auto;}
+    *{animation:none!important;transition:none!important;}
+  }
+  a{color:inherit;}
+  h1,h2,h3,h4{font-family:var(--display);margin:0;line-height:1.02;letter-spacing:-.02em;}
+  .mono{font-family:var(--mono);}
+
+  /* ---------- NAV ---------- */
+  nav{
+    position:sticky;top:0;z-index:1000;
+    background:rgba(14,19,48,.92);
+    backdrop-filter:blur(10px);
+    border-bottom:1px solid rgba(255,255,255,.08);
+  }
+  .nav-in{
+    max-width:1180px;margin:0 auto;padding:.7rem 1.2rem;
+    display:flex;align-items:center;gap:1rem;justify-content:space-between;
+  }
+  .nav-logo{font-family:var(--mono);font-weight:700;color:var(--paper);font-size:.82rem;letter-spacing:.12em;white-space:nowrap;}
+  .nav-logo b{color:var(--gold);}
+  .nav-links{display:flex;gap:.2rem;flex-wrap:wrap;overflow-x:auto;}
+  .nav-links a{
+    color:#C9CEE6;text-decoration:none;font-size:.78rem;font-weight:600;
+    padding:.35rem .6rem;border-radius:99px;white-space:nowrap;transition:.2s;
+  }
+  .nav-links a:hover{background:rgba(255,255,255,.1);color:#fff;}
+
+  /* ---------- HERO ---------- */
+  header.hero{
+    position:relative;
+    background:
+      radial-gradient(120% 90% at 80% -10%, rgba(255,90,95,.55), transparent 55%),
+      radial-gradient(100% 80% at 10% 0%, rgba(255,177,60,.45), transparent 50%),
+      radial-gradient(120% 120% at 50% 120%, rgba(15,163,159,.55), transparent 60%),
+      var(--night);
+    color:var(--paper);
+    padding:clamp(3rem,8vw,6rem) 1.2rem 0;
+    overflow:hidden;
+  }
+  .hero-in{max-width:1180px;margin:0 auto;position:relative;z-index:2;}
+  .eyebrow{
+    font-family:var(--mono);font-size:.8rem;letter-spacing:.32em;text-transform:uppercase;
+    color:var(--gold);margin-bottom:1.1rem;display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;
+  }
+  .eyebrow::before{content:"";width:34px;height:2px;background:var(--gold);display:inline-block;}
+  .hero h1{
+    font-size:clamp(3rem,11vw,8.5rem);font-weight:800;
+    line-height:.92;text-transform:uppercase;
+  }
+  .hero h1 .ln2{color:transparent;-webkit-text-stroke:2px var(--paper);}
+  .hero-sub{
+    font-size:clamp(1rem,2.2vw,1.35rem);max-width:46ch;margin:1.4rem 0 0;
+    color:#D9DDF0;line-height:1.5;
+  }
+  .hero-sub b{color:#fff;}
+  .stats{
+    display:grid;grid-template-columns:repeat(4,1fr);gap:1px;
+    margin:2.6rem 0 0;background:rgba(255,255,255,.12);
+    border:1px solid rgba(255,255,255,.12);border-radius:14px;overflow:hidden;
+  }
+  .stat{background:rgba(14,19,48,.55);padding:1.2rem 1rem;}
+  .stat .num{font-family:var(--display);font-weight:800;font-size:clamp(1.8rem,5vw,3rem);line-height:1;}
+  .stat .lbl{font-family:var(--mono);font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:#AEB4D6;margin-top:.45rem;}
+  .stat:nth-child(1) .num{color:var(--gold);}
+  .stat:nth-child(2) .num{color:var(--coral);}
+  .stat:nth-child(3) .num{color:var(--sea);}
+  .stat:nth-child(4) .num{color:#fff;}
+
+  /* departures board */
+  .board{
+    margin-top:2.8rem;border-top:1px dashed rgba(255,255,255,.25);
+    padding:1.4rem 0 0;overflow-x:auto;
+  }
+  .board-label{font-family:var(--mono);font-size:.7rem;letter-spacing:.2em;color:#9AA0C6;text-transform:uppercase;margin-bottom:.8rem;}
+  .board-track{display:flex;align-items:center;gap:.1rem;min-width:max-content;padding-bottom:1.4rem;}
+  .board-stop{display:flex;align-items:center;gap:.1rem;}
+  .board-chip{
+    font-family:var(--mono);font-weight:700;font-size:.8rem;
+    padding:.45rem .7rem;border-radius:8px;background:rgba(255,255,255,.08);
+    border:1px solid rgba(255,255,255,.14);white-space:nowrap;color:#fff;
+  }
+  .board-arrow{color:var(--gold);font-size:.9rem;padding:0 .15rem;}
+  .board-arrow.night{color:var(--violet);}
+  .board-arrow.fly{color:var(--coral);}
+
+  .scroll-cue{
+    text-align:center;font-family:var(--mono);font-size:.7rem;letter-spacing:.2em;
+    color:#7d83a8;padding:1.6rem 0 2rem;text-transform:uppercase;
+  }
+
+  /* ---------- SECTIONS ---------- */
+  section{padding:clamp(3rem,7vw,5.5rem) 1.2rem;}
+  .wrap{max-width:1180px;margin:0 auto;}
+  .sec-head{margin-bottom:2.4rem;}
+  .sec-kicker{font-family:var(--mono);font-size:.75rem;letter-spacing:.26em;text-transform:uppercase;color:var(--sea-deep);display:flex;align-items:center;gap:.6rem;margin-bottom:.8rem;}
+  .sec-kicker::before{content:"";width:26px;height:2px;background:var(--sea-deep);}
+  .sec-title{font-size:clamp(2rem,5.5vw,3.5rem);font-weight:800;color:var(--ink);}
+  .sec-intro{max-width:54ch;margin-top:.9rem;color:#4d5168;font-size:1.02rem;line-height:1.55;}
+
+  /* ---------- MAP ---------- */
+  #map-sec{background:var(--night);color:var(--paper);}
+  #map-sec .sec-kicker{color:var(--gold);} #map-sec .sec-kicker::before{background:var(--gold);}
+  #map-sec .sec-title{color:#fff;}
+  #map-sec .sec-intro{color:#C2C7E0;}
+  #map{height:clamp(360px,60vh,560px);border-radius:18px;border:1px solid rgba(255,255,255,.14);box-shadow:0 30px 60px rgba(0,0,0,.35);overflow:hidden;}
+  .map-legend{display:flex;gap:1.2rem;flex-wrap:wrap;margin-top:1.3rem;font-family:var(--mono);font-size:.75rem;color:#C2C7E0;}
+  .map-legend span{display:flex;align-items:center;gap:.45rem;}
+  .lg-dash{width:24px;height:0;border-top:3px solid var(--gold);}
+  .lg-dash.night{border-top:3px dashed var(--violet);}
+  .lg-dash.fly{border-top:3px dotted var(--coral);}
+  .leaflet-popup-content-wrapper{border-radius:12px;}
+  .map-pop b{font-family:var(--display);font-size:1rem;}
+  .map-pop .mp-dates{font-family:var(--mono);font-size:.72rem;color:#666;display:block;margin-top:2px;}
+  .pin{
+    width:30px;height:30px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);
+    border:2.5px solid #fff;box-shadow:0 4px 10px rgba(0,0,0,.4);
+    display:flex;align-items:center;justify-content:center;
+  }
+  .pin span{transform:rotate(45deg);font-family:var(--mono);font-weight:700;font-size:.7rem;color:#fff;}
+
+  /* ---------- CALENDAR ---------- */
+  #cal-sec{background:var(--paper-2);}
+  .cal{background:#fff;border-radius:18px;padding:clamp(1rem,3vw,2rem);box-shadow:0 20px 40px var(--shadow);border:1px solid var(--line);}
+  .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:.5rem;}
+  .cal-dow{font-family:var(--mono);font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:#9a9482;text-align:center;padding-bottom:.4rem;}
+  .cell{
+    aspect-ratio:1/1;border-radius:10px;display:flex;flex-direction:column;
+    padding:.45rem;background:var(--paper-2);position:relative;min-height:54px;
+    border:1px solid transparent;
+  }
+  .cell.empty{background:transparent;}
+  .cell.pre{opacity:.32;}
+  .cell .dnum{font-family:var(--mono);font-weight:700;font-size:.85rem;}
+  .cell .dcity{font-size:.62rem;font-weight:700;line-height:1.05;margin-top:auto;text-transform:uppercase;letter-spacing:.02em;}
+  .cell.trip{color:#fff;cursor:pointer;transition:transform .15s, box-shadow .15s;}
+  .cell.trip:hover,.cell.trip:focus-visible{transform:translateY(-3px) scale(1.03);box-shadow:0 10px 18px rgba(0,0,0,.18);outline:none;z-index:2;}
+  .cell.trip .dnum{color:rgba(255,255,255,.95);}
+  .cal-legend{display:flex;flex-wrap:wrap;gap:.5rem .9rem;margin-top:1.6rem;}
+  .cal-legend span{font-family:var(--mono);font-size:.72rem;display:flex;align-items:center;gap:.4rem;color:#5b5648;}
+  .dot{width:12px;height:12px;border-radius:4px;display:inline-block;}
+  #cal-grid{position:relative;}
+  .cell .moon{position:absolute;top:4px;right:5px;font-size:.78rem;line-height:1;filter:drop-shadow(0 1px 1px rgba(0,0,0,.45));}
+  .cell.nightday{box-shadow:inset 0 0 0 2px rgba(110,84,168,.9);}
+  .nt-connector{
+    position:absolute;z-index:6;transform:translate(-50%,-50%);
+    display:flex;align-items:center;gap:.15rem;
+    background:#6E54A8;color:#fff;border:2px solid #fff;border-radius:99px;
+    padding:.18rem .4rem;font-size:.74rem;white-space:nowrap;
+    box-shadow:0 5px 12px rgba(0,0,0,.3);font-family:var(--mono);font-weight:700;cursor:help;
+  }
+
+  /* ---------- ITINERARY (rail line) ---------- */
+  .rail{position:relative;margin-top:1rem;}
+  .rail::before{
+    content:"";position:absolute;left:21px;top:8px;bottom:8px;width:3px;
+    background:linear-gradient(var(--gold),var(--sea),var(--coral));border-radius:3px;
+  }
+  @media(min-width:760px){.rail::before{left:140px;}}
+  .leg{position:relative;padding:0 0 1.4rem 56px;display:flex;flex-direction:column;}
+  @media(min-width:760px){.leg{padding-left:175px;}}
+  .leg .date{
+    position:absolute;left:0;top:2px;font-family:var(--mono);font-size:.72rem;font-weight:700;
+    color:#8a8472;width:46px;text-align:center;
+  }
+  @media(min-width:760px){.leg .date{width:118px;text-align:right;font-size:.82rem;}}
+  .leg .dot-st{
+    position:absolute;left:13px;top:2px;width:19px;height:19px;border-radius:50%;
+    background:#fff;border:4px solid var(--sea);z-index:2;
+  }
+  @media(min-width:760px){.leg .dot-st{left:132px;}}
+  .leg.travel .dot-st{border-color:var(--gold);}
+  .leg.night .dot-st{border-color:var(--violet);border-style:dashed;}
+  .leg-card{
+    background:#fff;border:1px solid var(--line);border-radius:14px;padding:1rem 1.15rem;
+    box-shadow:0 8px 20px var(--shadow);scroll-margin-top:90px;
+  }
+  .leg-card .lc-top{display:flex;align-items:center;gap:.55rem;flex-wrap:wrap;margin-bottom:.3rem;}
+  .leg-card h3{font-size:1.18rem;font-weight:700;}
+  .tag{font-family:var(--mono);font-size:.62rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:.2rem .5rem;border-radius:99px;}
+  .tag.stay{background:#eef6f5;color:var(--sea-deep);}
+  .tag.move{background:#fff3e0;color:#b9791f;}
+  .tag.night{background:#efe9f7;color:var(--violet);}
+  .tag.fly{background:#ffecec;color:#c0383c;}
+  .leg-card p{margin:.35rem 0 0;color:#54586e;font-size:.92rem;line-height:1.5;}
+  .leg-card .when{font-family:var(--mono);font-size:.76rem;color:var(--coral);font-weight:700;}
+  .leg-card .crew{display:inline-flex;align-items:center;gap:.35rem;font-family:var(--mono);font-size:.7rem;background:var(--night);color:var(--gold);padding:.25rem .55rem;border-radius:99px;margin-top:.5rem;}
+
+  /* ---------- STAYS ---------- */
+  #stay-sec{background:var(--night-2);color:var(--paper);}
+  #stay-sec .sec-kicker{color:var(--gold);} #stay-sec .sec-kicker::before{background:var(--gold);}
+  #stay-sec .sec-title{color:#fff;} #stay-sec .sec-intro{color:#C2C7E0;}
+  .stay-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:1.1rem;}
+  .stay{
+    background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.12);border-radius:16px;
+    padding:1.25rem;display:flex;flex-direction:column;transition:.2s;position:relative;overflow:hidden;
+  }
+  .stay::before{content:"";position:absolute;top:0;left:0;width:100%;height:4px;background:var(--accent,var(--sea));}
+  .stay:hover{transform:translateY(-4px);border-color:rgba(255,255,255,.3);background:rgba(255,255,255,.07);}
+  .stay .s-city{font-family:var(--display);font-weight:800;font-size:1.45rem;color:#fff;}
+  .stay .s-nights{font-family:var(--mono);font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:var(--accent,var(--sea));margin-top:.15rem;}
+  .stay .s-price{font-family:var(--display);font-weight:800;font-size:1.7rem;color:var(--gold);margin:.7rem 0 .2rem;}
+  .stay .s-row{display:flex;justify-content:space-between;gap:.5rem;font-family:var(--mono);font-size:.74rem;color:#B6BBD8;padding:.3rem 0;border-bottom:1px dashed rgba(255,255,255,.1);}
+  .stay .s-row span:last-child{color:#fff;text-align:right;}
+  .stay .s-fac{font-size:.82rem;color:#C2C7E0;margin:.7rem 0 0;line-height:1.45;}
+  .stay .s-links{display:flex;gap:.5rem;margin-top:.9rem;flex-wrap:wrap;}
+  .stay .s-links a{font-family:var(--mono);font-size:.72rem;font-weight:700;text-decoration:none;padding:.45rem .7rem;border-radius:8px;transition:.2s;}
+  .a-book{background:var(--gold);color:var(--night);}
+  .a-book:hover{filter:brightness(1.08);}
+  .a-map{background:rgba(255,255,255,.1);color:#fff;}
+  .a-map:hover{background:rgba(255,255,255,.2);}
+  .budget{margin-top:2rem;display:flex;align-items:baseline;gap:1rem;flex-wrap:wrap;font-family:var(--mono);color:#C2C7E0;font-size:.85rem;}
+  .budget b{font-family:var(--display);font-size:2rem;color:var(--gold);}
+
+  /* ---------- TRAINS ---------- */
+  #train-sec{background:var(--paper);}
+  .tick-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1rem;}
+  .ticket{
+    background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden;
+    box-shadow:0 8px 20px var(--shadow);display:flex;flex-direction:column;
+  }
+  .ticket .t-strip{padding:.5rem .9rem;font-family:var(--mono);font-size:.66rem;letter-spacing:.12em;text-transform:uppercase;color:#fff;display:flex;justify-content:space-between;}
+  .t-strip.t-train{background:var(--sea-deep);}
+  .t-strip.t-night{background:var(--violet);}
+  .t-strip.t-fly{background:var(--coral);}
+  .ticket .t-body{padding:1rem .9rem;position:relative;}
+  .ticket .t-route{display:flex;align-items:center;gap:.5rem;font-family:var(--display);font-weight:700;font-size:1.05rem;}
+  .ticket .t-route .arr{color:var(--sea);}
+  .ticket .t-note{font-size:.82rem;color:#5e6276;margin-top:.5rem;line-height:1.45;}
+  .ticket .t-note.warn{color:#b9791f;font-weight:600;}
+  .ticket .t-link{font-family:var(--mono);font-size:.72rem;font-weight:700;color:var(--sea-deep);text-decoration:none;display:inline-block;margin-top:.6rem;border-bottom:2px solid var(--sea);}
+  .ticket .t-link:hover{color:var(--coral);border-color:var(--coral);}
+
+  /* ---------- EXPERIENCES ---------- */
+  #fun-sec{background:linear-gradient(180deg,var(--sea-deep),var(--night));color:var(--paper);}
+  #fun-sec .sec-kicker{color:var(--gold);} #fun-sec .sec-kicker::before{background:var(--gold);}
+  #fun-sec .sec-title{color:#fff;} #fun-sec .sec-intro{color:#D6F0EE;}
+  .fun-sub{font-family:var(--display);font-weight:700;font-size:1.4rem;color:var(--gold);margin:2.4rem 0 1.1rem;}
+  .fun-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:1rem;}
+  .fun{
+    background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);border-radius:14px;
+    padding:1.1rem;transition:.2s;display:flex;flex-direction:column;gap:.35rem;
+  }
+  .fun:hover{transform:translateY(-4px) rotate(-.6deg);background:rgba(255,255,255,.1);}
+  .fun .f-emoji{font-size:1.7rem;}
+  .fun .f-name{font-family:var(--display);font-weight:700;font-size:1.1rem;color:#fff;}
+  .fun .f-loc{font-family:var(--mono);font-size:.72rem;color:#9fe6df;letter-spacing:.05em;}
+  .fun .f-price{font-family:var(--mono);font-weight:700;font-size:.85rem;color:var(--gold);margin-top:auto;}
+  .conc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:1rem;}
+  .conc{background:rgba(255,90,95,.12);border:1px solid rgba(255,90,95,.4);border-radius:14px;padding:1.1rem;}
+  .conc .c-name{font-family:var(--display);font-weight:700;font-size:1.15rem;color:#fff;}
+  .conc .c-loc{font-family:var(--mono);font-size:.72rem;color:#ffd2b0;margin-top:.3rem;}
+
+  /* ---------- PACKING ---------- */
+  #pack-sec{background:var(--paper-2);}
+  .pack-bar-wrap{background:#fff;border:1px solid var(--line);border-radius:99px;height:16px;overflow:hidden;margin:1rem 0 .6rem;box-shadow:inset 0 1px 3px rgba(0,0,0,.08);}
+  .pack-bar{height:100%;width:0;background:linear-gradient(90deg,var(--sea),var(--gold));transition:width .35s ease;}
+  .pack-count{font-family:var(--mono);font-size:.8rem;color:#6b6657;}
+  .pack-count b{color:var(--sea-deep);}
+  .pack-cols{columns:280px;column-gap:1.4rem;margin-top:1.8rem;}
+  .pack-cat{break-inside:avoid;margin-bottom:1.4rem;background:#fff;border:1px solid var(--line);border-radius:14px;padding:1.1rem 1.2rem;box-shadow:0 6px 16px var(--shadow);}
+  .pack-cat h4{font-size:1.05rem;font-weight:700;margin-bottom:.7rem;display:flex;align-items:center;gap:.5rem;}
+  .pitem{display:flex;align-items:center;gap:.65rem;padding:.32rem 0;cursor:pointer;font-size:.92rem;color:#3c4054;user-select:none;}
+  .pitem input{position:absolute;opacity:0;width:0;height:0;}
+  .pbox{
+    width:20px;height:20px;border-radius:6px;border:2px solid #c8bfa9;flex:0 0 auto;
+    display:flex;align-items:center;justify-content:center;transition:.15s;
+  }
+  .pbox::after{content:"✓";color:#fff;font-size:.78rem;font-weight:700;opacity:0;transform:scale(.4);transition:.15s;}
+  .pitem input:checked + .pbox{background:var(--sea);border-color:var(--sea);}
+  .pitem input:checked + .pbox::after{opacity:1;transform:scale(1);}
+  .pitem input:checked ~ .ptxt{text-decoration:line-through;color:#aaa39180;}
+  .pitem input:focus-visible + .pbox{outline:2px solid var(--coral);outline-offset:2px;}
+
+  /* ---------- DESPESAS ---------- */
+  #cost-sec{background:var(--paper-2);}
+  .crew-strip{display:flex;flex-wrap:wrap;align-items:stretch;gap:.8rem;margin-bottom:2.2rem;}
+  .crew-phase{background:#fff;border:1px solid var(--line);border-radius:14px;padding:1rem 1.2rem;flex:1 1 240px;box-shadow:0 6px 16px var(--shadow);}
+  .crew-phase.full{border-color:var(--sea);}
+  .crew-phase .cp-days{font-family:var(--mono);font-weight:700;font-size:.78rem;color:var(--coral);display:block;}
+  .crew-phase .cp-people{display:block;font-weight:600;margin:.45rem 0;color:var(--ink);font-size:.95rem;}
+  .crew-phase .cp-note{font-family:var(--mono);font-size:.72rem;color:var(--sea-deep);}
+  .crew-arrow{display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:.72rem;color:#8a8472;padding:.3rem;text-align:center;flex:1 1 130px;}
+  .cost-people{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:1rem;}
+  .cost-person{background:#fff;border:1px solid var(--line);border-radius:16px;padding:1.4rem 1rem;text-align:center;box-shadow:0 8px 20px var(--shadow);position:relative;overflow:hidden;}
+  .cost-person::before{content:"";position:absolute;top:0;left:0;width:100%;height:5px;background:var(--pc);}
+  .cost-person .avatar{width:54px;height:54px;border-radius:50%;margin:0 auto .7rem;display:flex;align-items:center;justify-content:center;font-family:var(--display);font-weight:800;font-size:1.45rem;color:#fff;background:var(--pc);}
+  .cost-person .cp-name{font-family:var(--display);font-weight:700;font-size:1.2rem;}
+  .cost-person .cp-amount{font-family:var(--display);font-weight:800;font-size:2rem;color:var(--sea-deep);margin-top:.15rem;}
+  .cost-person .cp-tag{font-family:var(--mono);font-size:.64rem;letter-spacing:.06em;text-transform:uppercase;color:#8a8472;margin-top:.5rem;display:block;}
+  .cost-subtitle{font-size:1.4rem;font-weight:700;margin:2.6rem 0 1rem;color:var(--ink);}
+  .cost-table-wrap{overflow-x:auto;border-radius:14px;border:1px solid var(--line);box-shadow:0 8px 20px var(--shadow);}
+  .cost-table{width:100%;border-collapse:collapse;background:#fff;font-size:.9rem;min-width:540px;}
+  .cost-table th,.cost-table td{padding:.7rem .9rem;text-align:left;border-bottom:1px solid var(--line);}
+  .cost-table th{font-family:var(--mono);font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;color:#8a8472;background:var(--paper-2);}
+  .cost-table td:nth-child(2),.cost-table td:nth-child(3),.cost-table td:nth-child(4),
+  .cost-table th:nth-child(2),.cost-table th:nth-child(3),.cost-table th:nth-child(4){text-align:right;font-family:var(--mono);}
+  .cost-table tbody tr:hover{background:var(--paper-2);}
+  .cost-table tfoot td{font-weight:700;font-family:var(--mono);border-top:2px solid var(--ink);background:#fff;}
+  .cost-foot{font-family:var(--mono);font-size:.78rem;color:#8a8472;margin-top:1rem;max-width:62ch;line-height:1.55;}
+
+  /* ---------- FOOTER ---------- */
+  footer{background:var(--night);color:#9AA0C6;text-align:center;padding:3rem 1.2rem;}
+  footer .f-big{font-family:var(--display);font-weight:800;font-size:clamp(1.6rem,5vw,2.6rem);color:#fff;text-transform:uppercase;}
+  footer .f-big span{color:var(--gold);}
+  footer .f-small{font-family:var(--mono);font-size:.75rem;letter-spacing:.1em;margin-top:1rem;}
+
+  /* ===================== RESPONSIVO ===================== */
+  /* Tablet */
+  @media (max-width: 900px){
+    .nav-links{gap:.1rem;}
+    .stats{grid-template-columns:repeat(2,1fr);}
+  }
+
+  /* Telemóvel */
+  @media (max-width: 640px){
+    nav .nav-in{padding:.55rem .8rem;gap:.55rem;}
+    .nav-logo{font-size:.72rem;}
+    .nav-links{flex:1;min-width:0;-webkit-overflow-scrolling:touch;}
+    .nav-links a{font-size:.72rem;padding:.3rem .45rem;}
+
+    header.hero{padding:2.4rem 1rem 0;}
+    .hero-sub{font-size:1rem;}
+    .stat{padding:1rem .8rem;}
+    .board-label{font-size:.64rem;}
+
+    section{padding:2.6rem 1rem;}
+    .sec-intro{font-size:.95rem;}
+
+    #map{height:340px;}
+    .map-legend{font-size:.66rem;gap:.7rem 1rem;}
+
+    .cal{padding:.8rem;}
+    .cal-grid{gap:.28rem;}
+    .cell{aspect-ratio:auto;min-height:46px;padding:.3rem;border-radius:8px;}
+    .cell .dnum{font-size:.78rem;}
+    .cell .dcity{font-size:.5rem;line-height:1.02;}
+    .cell .moon{font-size:.64rem;top:3px;right:3px;}
+    .cal-dow{font-size:.6rem;}
+    .cal-legend{gap:.4rem .7rem;}
+    .cal-legend span{font-size:.66rem;}
+    .nt-connector{font-size:.6rem;padding:.1rem .26rem;border-width:1.5px;gap:.05rem;}
+
+    .rail::before{left:19px;}
+    .leg{padding-left:50px;}
+    .leg .date{width:40px;text-align:center;font-size:.66rem;}
+    .leg .dot-st{left:11px;width:17px;height:17px;}
+    .leg-card{padding:.85rem .9rem;}
+    .leg-card h3{font-size:1.05rem;}
+
+    .budget b{font-size:1.55rem;}
+
+    .crew-arrow{flex-basis:100%;}
+    .cost-people{grid-template-columns:repeat(2,1fr);}
+    .cost-person{padding:1.1rem .7rem;}
+    .cost-person .avatar{width:46px;height:46px;font-size:1.2rem;}
+    .cost-person .cp-amount{font-size:1.55rem;}
+
+    .pack-cols{columns:1;}
+  }
+
+  /* Telemóvel pequeno */
+  @media (max-width: 380px){
+    .hero h1{font-size:2.7rem;}
+    .stat .num{font-size:1.55rem;}
+    .cell .dcity{font-size:.46rem;}
+    .cost-people{grid-template-columns:1fr;}
+  }
+
+  .reveal{opacity:0;transform:translateY(22px);transition:opacity .6s ease, transform .6s ease;}
+  .reveal.in{opacity:1;transform:none;}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-in">
+    <div class="nav-logo">🚆 INTERRAIL <b>2026</b></div>
+    <div class="nav-links">
+      <a href="#map-sec">Mapa</a>
+      <a href="#cal-sec">Calendário</a>
+      <a href="#itin-sec">Dia a Dia</a>
+      <a href="#stay-sec">Dormir</a>
+      <a href="#cost-sec">Despesas</a>
+      <a href="#train-sec">Comboios</a>
+      <a href="#fun-sec">Aventuras</a>
+      <a href="#pack-sec">Tralhas</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="hero-in">
+    <div class="eyebrow">12 – 30 Julho 2026 · Porto → de volta ao Porto</div>
+    <h1>Viena<br><span class="ln2">ao Adriático</span></h1>
+    <p class="hero-sub">Dezanove dias de comboio pela Europa Central até à costa do <b>mar Adriático</b> — capitais imperiais, comboios noturnos, jazz, montanhas, ilhas e muito banho. Termina em <b>Madrid</b> antes de aterrar em casa.</p>
+
+    <div class="stats">
+      <div class="stat"><div class="num">19</div><div class="lbl">Dias na estrada</div></div>
+      <div class="stat"><div class="num">10</div><div class="lbl">Cidades-base</div></div>
+      <div class="stat"><div class="num">8</div><div class="lbl">Países</div></div>
+      <div class="stat"><div class="num">2</div><div class="lbl">Comboios noturnos</div></div>
+    </div>
+
+    <div class="board">
+      <div class="board-label">Itinerário completo</div>
+      <div class="board-track" id="board"></div>
+    </div>
+  </div>
+  <div class="scroll-cue">↓ desce e explora a viagem ↓</div>
+</header>
+
+<!-- MAPA -->
+<section id="map-sec">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="sec-kicker">O Trajeto</div>
+      <h2 class="sec-title">O mapa da loucura</h2>
+      <p class="sec-intro">Cada paragem da viagem, ligada por comboio (laranja), comboio noturno (roxo tracejado) e voo (coral pontilhado). Carrega nos pinos para veres as datas.</p>
+    </div>
+    <div id="map" class="reveal"></div>
+    <div class="map-legend reveal">
+      <span><i class="lg-dash"></i> Comboio de dia</span>
+      <span><i class="lg-dash night"></i> Comboio noturno</span>
+      <span><i class="lg-dash fly"></i> Voo</span>
+    </div>
+  </div>
+</section>
+
+<!-- CALENDÁRIO -->
+<section id="cal-sec">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="sec-kicker">Julho 2026</div>
+      <h2 class="sec-title">Onde estás em cada dia</h2>
+      <p class="sec-intro">Calendário do mês inteiro. Cada cor é uma cidade. Carrega num dia para saltar para o detalhe.</p>
+    </div>
+    <div class="cal reveal">
+      <div class="cal-grid" id="cal-dows"></div>
+      <div class="cal-grid" id="cal-grid" style="margin-top:.5rem;"></div>
+      <div class="cal-legend" id="cal-legend"></div>
+    </div>
+  </div>
+</section>
+
+<!-- DIA A DIA -->
+<section id="itin-sec">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="sec-kicker">Dia a Dia</div>
+      <h2 class="sec-title">A viagem, estação a estação</h2>
+      <p class="sec-intro">A linha de comboio segue de cima para baixo. Pontos laranja = dia de viagem · roxo tracejado = noite no comboio · azul = dia de explorar.</p>
+    </div>
+    <div class="rail" id="rail"></div>
+  </div>
+</section>
+
+<!-- DORMIR -->
+<section id="stay-sec">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="sec-kicker">Onde Dormir</div>
+      <h2 class="sec-title">Os alojamentos</h2>
+      <p class="sec-intro">Tudo já reservado (ou quase). Links de reserva e localização em cada cartão.</p>
+    </div>
+    <div class="stay-grid" id="stays"></div>
+    <div class="budget reveal">
+      <span>Total de alojamento reservado</span>
+      <b>≈ 1016,81 €</b>
+      <span>· Lyon grátis · vê a divisão por pessoa em baixo ↓</span>
+    </div>
+  </div>
+</section>
+
+<!-- DESPESAS -->
+<section id="cost-sec">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="sec-kicker">Divisão de Despesas</div>
+      <h2 class="sec-title">Quem paga o quê</h2>
+      <p class="sec-intro">Divisão do <b>alojamento</b> entre todos. O <b>Cruz</b> e o <b>Guilherme</b> fazem a viagem toda; o <b>Kulzer</b> e o <b>Poças</b> juntam-se em Budapeste no <b>dia 19 às 12h</b> — por isso as primeiras 4 noites são só a dividir por 2, e a partir daí por 4.</p>
+    </div>
+
+    <div class="crew-strip reveal">
+      <div class="crew-phase">
+        <span class="cp-days">12 → 18 Jul · Viena, Praga, Lyon, Budapeste (1ª noite)</span>
+        <span class="cp-people">🧑 Cruz · 🧑 Guilherme</span>
+        <span class="cp-note">÷ 2 pessoas</span>
+      </div>
+      <div class="crew-arrow">🛬 dia 19, 12h<br>chegam Kulzer & Poças</div>
+      <div class="crew-phase full">
+        <span class="cp-days">19 → 30 Jul · Budapeste, Belgrado, Budva, Split, Zagreb</span>
+        <span class="cp-people">🧑 Cruz · 🧑 Guilherme · 🧑 Kulzer · 🧑 Poças</span>
+        <span class="cp-note">÷ 4 pessoas</span>
+      </div>
+    </div>
+
+    <div class="cost-people" id="costPeople"></div>
+
+    <h3 class="cost-subtitle reveal">Detalhe por alojamento</h3>
+    <div class="cost-table-wrap reveal">
+      <table class="cost-table" id="costTable">
+        <thead><tr><th>Alojamento</th><th>Total</th><th>÷</th><th>Por pessoa</th><th>Quem divide</th></tr></thead>
+        <tbody></tbody>
+        <tfoot></tfoot>
+      </table>
+    </div>
+    <p class="cost-foot reveal">Inclui apenas o alojamento reservado. Comboios / Interrail, voos e atividades ficam à parte — as atividades são por pessoa, conforme quem participa em cada uma.</p>
+  </div>
+</section>
+
+<!-- COMBOIOS -->
+<section id="train-sec">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="sec-kicker">Comboios & Bilhetes</div>
+      <h2 class="sec-title">A logística dos carris</h2>
+      <p class="sec-intro">Cada troço, com notas de onde e quando comprar. Atenção às compras presenciais e às que são no próprio dia.</p>
+    </div>
+    <div class="tick-grid" id="tickets"></div>
+  </div>
+</section>
+
+<!-- AVENTURAS -->
+<section id="fun-sec">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="sec-kicker">Concertos & Aventuras</div>
+      <h2 class="sec-title">O que torna isto insano</h2>
+      <p class="sec-intro">Festivais de jazz pelo caminho e adrenalina dos Balcãs ao Adriático. Preços por pessoa, aproximados.</p>
+    </div>
+
+    <div class="fun-sub reveal">🎷 Festivais & Concertos</div>
+    <div class="conc-grid reveal" id="concerts"></div>
+
+    <div class="fun-sub reveal">🤸 Aventuras & Adrenalina</div>
+    <div class="fun-grid reveal" id="activities"></div>
+  </div>
+</section>
+
+<!-- TRALHAS -->
+<section id="pack-sec">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="sec-kicker">Lista de Tralhas</div>
+      <h2 class="sec-title">Não te esqueças de nada</h2>
+      <p class="sec-intro">Marca à medida que arrumas a mochila. O progresso fica guardado enquanto a página estiver aberta.</p>
+      <div class="pack-bar-wrap"><div class="pack-bar" id="packbar"></div></div>
+      <div class="pack-count"><b id="packdone">0</b> de <span id="packtotal">0</span> arrumadas</div>
+    </div>
+    <div class="pack-cols" id="packing"></div>
+  </div>
+</section>
+
+<footer>
+  <div class="f-big">Boa viagem, <span>seus malucos</span> 🚆🌊</div>
+  <div class="f-small">12—30 JUL 2026 · 8 PAÍSES · 2 COMBOIOS NOTURNOS · 0 ARREPENDIMENTOS</div>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+/* ===================== DADOS ===================== */
+const stops = [
+  {key:'viena',    name:'Viena',     country:'Áustria',     flag:'🇦🇹', lat:48.2082, lng:16.3738, dates:'12–14 Jul', color:'var(--c-viena)', hex:'#E8A33D'},
+  {key:'praga',    name:'Praga',     country:'Chéquia',     flag:'🇨🇿', lat:50.0755, lng:14.4378, dates:'14–16 Jul', color:'var(--c-praga)', hex:'#D7504D'},
+  {key:'lyon',     name:'Lyon',      country:'França',      flag:'🇫🇷', lat:45.7640, lng:4.8357,  dates:'16–18 Jul', color:'var(--c-lyon)', hex:'#5B6CB8'},
+  {key:'budapeste',name:'Budapeste', country:'Hungria',     flag:'🇭🇺', lat:47.4979, lng:19.0402, dates:'18–22 Jul', color:'var(--c-budapeste)', hex:'#1F9C8E'},
+  {key:'balaton',  name:'Lago Balaton', country:'Hungria',  flag:'🇭🇺', lat:46.9100, lng:18.0580, dates:'20 Jul (bate-volta)', color:'var(--c-balaton)', hex:'#42B3AC'},
+  {key:'belgrado', name:'Belgrado',  country:'Sérvia',      flag:'🇷🇸', lat:44.7866, lng:20.4489, dates:'22–23 Jul', color:'var(--c-belgrado)', hex:'#B55A4E'},
+  {key:'bar',      name:'Bar',       country:'Montenegro',  flag:'🇲🇪', lat:42.0931, lng:19.1000, dates:'24 Jul', color:'var(--c-noturno)', hex:'#6C5CA8'},
+  {key:'budva',    name:'Budva',     country:'Montenegro',  flag:'🇲🇪', lat:42.2911, lng:18.8401, dates:'24–26 Jul', color:'var(--c-budva)', hex:'#119C8B'},
+  {key:'split',    name:'Split',     country:'Croácia',     flag:'🇭🇷', lat:43.5081, lng:16.4402, dates:'26–28 Jul', color:'var(--c-split)', hex:'#E07A4A'},
+  {key:'zagreb',   name:'Zagreb',    country:'Croácia',     flag:'🇭🇷', lat:45.8150, lng:15.9819, dates:'29 Jul', color:'var(--c-zagreb)', hex:'#3FA2B0'},
+  {key:'madrid',   name:'Madrid',    country:'Espanha',     flag:'🇪🇸', lat:40.4168, lng:-3.7038, dates:'30 Jul', color:'var(--c-madrid)', hex:'#D64545'},
+];
+const porto = {name:'Porto', lat:41.1579, lng:-8.6291};
+
+/* dia -> cidade + país (12 a 30 julho) */
+const dayMap = {
+  12:{city:'viena',     country:'Áustria',    label:'Viena',  note:'Chegada 22:45'},
+  13:{city:'viena',     country:'Áustria',    label:'Viena'},
+  14:{city:'praga',     country:'Chéquia',    label:'Praga',  travel:true},
+  15:{city:'praga',     country:'Chéquia',    label:'Praga'},
+  16:{city:'lyon',      country:'França',     label:'Lyon',   travel:true},
+  17:{city:'lyon',      country:'França',     label:'Lyon'},
+  18:{city:'budapeste', country:'Hungria',    label:'Budapeste', travel:true},
+  19:{city:'budapeste', country:'Hungria',    label:'Budapeste'},
+  20:{city:'balaton',   country:'Hungria',    label:'Balaton'},
+  21:{city:'budapeste', country:'Hungria',    label:'Budapeste'},
+  22:{city:'belgrado',  country:'Sérvia',     label:'Belgrado', travel:true},
+  23:{city:'belgrado',  country:'Sérvia',     label:'Belgrado', night:true, nightTo:24},
+  24:{city:'budva',     country:'Montenegro', label:'Budva',  travel:true},
+  25:{city:'budva',     country:'Montenegro', label:'Budva'},
+  26:{city:'split',     country:'Croácia',    label:'Split',  travel:true},
+  27:{city:'split',     country:'Croácia',    label:'Split'},
+  28:{city:'split',     country:'Croácia',    label:'Split',  night:true, nightTo:29},
+  29:{city:'zagreb',    country:'Croácia',    label:'Zagreb'},
+  30:{city:'madrid',    country:'Espanha',    label:'Madrid', travel:true},
+};
+const countryColors = {
+  'Áustria':'#E8A33D','Chéquia':'#CE4257','França':'#3F62C4','Hungria':'#2FA84F',
+  'Sérvia':'#9C5A3C','Montenegro':'#14A8A0','Croácia':'#E8772E','Espanha':'#C0399B'
+};
+const countryFlags = {
+  'Áustria':'🇦🇹','Chéquia':'🇨🇿','França':'🇫🇷','Hungria':'🇭🇺',
+  'Sérvia':'🇷🇸','Montenegro':'🇲🇪','Croácia':'🇭🇷','Espanha':'🇪🇸'
+};
+const nightColor = '#6E54A8';
+const cityCountry = {viena:'Áustria',praga:'Chéquia',lyon:'França',budapeste:'Hungria',balaton:'Hungria',belgrado:'Sérvia',bar:'Montenegro',budva:'Montenegro',split:'Croácia',zagreb:'Croácia',madrid:'Espanha',noturno:'Sérvia'};
+
+/* itinerário detalhado */
+const itinerary = [
+  {d:12,city:'viena',type:'fly', t:'Voo · chegada',  title:'Chegada a Viena', when:'Chegada 22:45', txt:'Aterragem em Viena à noite. Check-in tranquilo no hostel e dormir — o resto começa amanhã.'},
+  {d:13,city:'viena',type:'stay',title:'Viena imperial', txt:'Dia inteiro na capital austríaca. Aproveitar o Jazz Fest Wien se houver concertos.'},
+  {d:14,city:'praga',type:'move',title:'Viena → Praga', txt:'Comboio para Praga. Check-in e primeira noite na cidade dourada.'},
+  {d:15,city:'praga',type:'stay',title:'Praga a pé', txt:'Dia para a cidade velha, pontes e — para os corajosos — a pista de bobsleigh.'},
+  {d:16,city:'lyon',type:'move',title:'Praga → Lyon', when:'Partida 6:00', txt:'Dia longo de comboio (madrugar!) atravessando a Europa central até França.'},
+  {d:17,city:'lyon',type:'stay',title:'Lyon gastronómica', txt:'Capital da comida francesa. Passear, comer bem e descansar antes de voltar a leste.'},
+  {d:18,city:'budapeste',type:'move',title:'Lyon → Budapeste', txt:'De volta a leste, rumo à Hungria. Primeira noite em Budapeste.'},
+  {d:19,city:'budapeste',type:'stay',title:'Budapeste + reforços', when:'Kulzer & Poças chegam às 12h', crew:'+ Kulzer & Poças', txt:'O grupo cresce! Mudança para o apartamento maior. Termas, ruin bars e o Danúbio.'},
+  {d:20,city:'balaton',type:'move',title:'Bate-volta ao Lago Balaton', txt:'Dia de praia de água doce: wakeboard e kitesurf no maior lago da Europa Central. À noite, de volta a Budapeste.'},
+  {d:21,city:'budapeste',type:'stay',title:'Budapeste livre', txt:'Último dia completo na Hungria. Banhos termais Széchenyi obrigatórios.'},
+  {d:22,city:'belgrado',type:'move',title:'Budapeste → Belgrado', when:'Sair cedo · 3 comboios', txt:'Dia de transição em três comboios até à Sérvia. À tarde/noite, Belgrado.'},
+  {d:23,city:'belgrado',type:'night',title:'Dia em Belgrado → comboio noturno p/ Bar', when:'Dia em Belgrado · comboio noturno à noite', txt:'Aproveitar o dia inteiro em Belgrado e, ao fim da tarde/noite, apanhar o comboio noturno rumo a Bar — uma das viagens de comboio mais bonitas da Europa, a descer das montanhas até ao mar. Dormem a bordo e acordam no Adriático.'},
+  {d:24,city:'budva',type:'move',title:'Chegada a Bar → Budva', txt:'Acordar junto ao Adriático. De Bar segue-se para Budva. Olá, mar!'},
+  {d:25,city:'budva',type:'stay',title:'Budva & Kotor', txt:'Praias do Montenegro e, ali ao lado, a baía de Kotor — speedboat e o KotorArt Festival.'},
+  {d:26,city:'split',type:'move',title:'Budva → Split', txt:'Subir a costa adriática até à Croácia. Split à tarde.'},
+  {d:27,city:'split',type:'stay',title:'Split & ilhas', txt:'Palácio de Diocleciano, ilhas em frente e a zipline sobre o rio Cetina.'},
+  {d:28,city:'split',type:'night',title:'Dia em Split → comboio noturno p/ Zagreb', when:'Dia em Split · comboio noturno à noite', txt:'Último dia inteiro em Split e, à noite, o último comboio noturno do interrail, a cruzar a Croácia até à capital. Dormem a bordo e chegam a Zagreb de manhã.'},
+  {d:29,city:'zagreb',type:'stay',title:'Chegada a Zagreb', txt:'Manhã de chegada. Dia para conhecer a capital croata antes do voo de regresso.'},
+  {d:30,city:'madrid',type:'fly',title:'Zagreb → Madrid → Porto', when:'11:10 → 14:05 Madrid · 23:30 → 23:50 Porto', txt:'Voo para Madrid com várias horas na cidade — VISITAR MADRID, muito importante! À noite, voo final para o Porto.'},
+];
+
+/* alojamentos */
+const stays = [
+  {city:'Viena', nights:'2 noites · 12–14 Jul', price:'140,28 €', acc:'#E8A33D', plat:'HostelWorld',
+   checkin:'15:00–24:00', checkout:'10:00', fac:'Quarto suite com duas camas e cozinha equipada.',
+   book:'https://www.portuguese.hostelworld.com/pwa/hosteldetails.php/A-T-Hotel-and-Hostel/Vienna/67989?from=2026-07-12&to=2026-07-14&guests=2',
+   map:'https://maps.app.goo.gl/wdRC654CNUwDDSn38'},
+  {city:'Praga', nights:'2 noites · 14–16 Jul', price:'57,19 €', acc:'#D7504D', plat:'Airbnb',
+   checkin:'14:00–24:00', checkout:'10:00', fac:'Quarto privado com 2 camas, sem cozinha.',
+   book:'https://www.airbnb.pt/trips/v1?confirmationCode=HME5JD5FZX&reservationType=STAY',
+   map:'https://maps.app.goo.gl/SCprpuVE4gXffC4n9'},
+  {city:'Lyon', nights:'2 noites · 16–18 Jul', price:'0 € 🎉', acc:'#5B6CB8', plat:null,
+   checkin:'—', checkout:'—', fac:'Hotel a confirmar — sem custo previsto.',
+   book:null, map:null},
+  {city:'Budapeste I', nights:'1 noite · 18–19 Jul', price:'54,30 €', acc:'#1F9C8E', plat:'Booking',
+   checkin:'14:00–23:30', checkout:'até 10:00', fac:'Primeira noite — só Cruz e Guilherme (Kulzer e Poças ainda não chegaram).',
+   book:'https://www.booking.com/hotel/hu/rose-city.pt-pt.html',
+   map:'https://maps.app.goo.gl/FstCsjxixJZjejaw7'},
+  {city:'Budapeste II', nights:'3 noites · 19–22 Jul', price:'220 €', acc:'#1F9C8E', plat:'Booking',
+   checkin:'16:00', checkout:'10:00', fac:'Apartamento completo p/ 4. Levar ID c/ foto + cartão de crédito no check-in; avisar hora de chegada.',
+   book:'https://www.booking.com/hotel/hu/e13-design-studio.pt-pt.html',
+   map:'https://maps.app.goo.gl/GPLfYBxLRMFnD9Gt9'},
+  {city:'Belgrado', nights:'1 noite · 22–23 Jul', price:'56,29 €', acc:'#B55A4E', plat:'Airbnb',
+   checkin:'15:00', checkout:'11:00', fac:'Apartamento privado, cama + sofá-cama, com cozinha. Podem guardar malas mais cedo.',
+   book:'https://www.airbnb.pt/trips/v1/reservation-details/ro/RESERVATION2_CHECKIN/HME4KJMXJD',
+   map:'https://maps.app.goo.gl/M6beTx94t7uUdW357'},
+  {city:'Budva', nights:'2 noites · 24–26 Jul', price:'198 €', acc:'#119C8B', plat:'Booking',
+   checkin:'12:00', checkout:'10:00', fac:'Apartamento moderno a poucos passos do Adriático.',
+   book:'https://www.booking.com/hotel/me/modern-apartment-steps-from-the-adriatic.pt-pt.html',
+   map:'https://maps.app.goo.gl/HS6vTWKcLhhfJkkh7'},
+  {city:'Split', nights:'2 noites · 26–28 Jul', price:'226,75 €', acc:'#E07A4A', plat:'Airbnb',
+   checkin:'15:00', checkout:'10:00', fac:'Alojamento p/ 4 pessoas em Split.',
+   book:'https://www.airbnb.pt/rooms/1191112600940503130?adults=4&check_in=2026-07-26&check_out=2026-07-28',
+   map:'https://maps.app.goo.gl/CXpRVTj34mewb7m26'},
+  {city:'Zagreb', nights:'1 noite · 29–30 Jul', price:'64 €', acc:'#3FA2B0', plat:'Booking',
+   checkin:'—', checkout:'—', fac:'Apartamento charmoso no centro de Zagreb p/ 4.',
+   book:'https://www.booking.com/hotel/hr/sarmantan-stan-u-centru-zagreba.en-gb.html',
+   map:'https://maps.app.goo.gl/bUZVQrwhnHTtYPLC8'},
+];
+
+/* bilhetes / comboios */
+const tickets = [
+  {type:'fly', from:'Porto', to:'Barcelona', who:'Kulzer & Poças', note:'Ida dos reforços rumo a Budapeste.'},
+  {type:'fly', from:'Barcelona', to:'Budapeste', who:'Kulzer & Poças', note:'Chegada a Budapeste dia 19 às 12h.'},
+  {type:'train', from:'Viena', to:'Praga', when:'14 Jul', note:'Todos. Comboio direto.'},
+  {type:'train', from:'Praga', to:'Lyon', when:'16 Jul · 6:00', note:'Madrugar! Dia longo a atravessar a Europa.'},
+  {type:'train', from:'Lyon', to:'Budapeste', when:'18 Jul', note:'De volta a leste.'},
+  {type:'train', from:'Budapeste', to:'Balaton', when:'20 Jul', note:'Bate-volta. Bilhetes na MÁV.', link:'https://jegy.mav.hu/?lang=en', warn:'Nota: no plano a ida ao Balaton é dia 20; a reserva tinha 22 Jul — confirmar data.'},
+  {type:'train', from:'Budapeste', to:'Belgrado', when:'22 Jul · cedo', note:'3 comboios. Sair de manhã cedo.'},
+  {type:'night', from:'Belgrado', to:'Bar', when:'23 Jul', note:'Comboio noturno lendário. Comprar 1 dia antes, presencialmente.', warn:'Bilhete presencial, 1 dia antes.'},
+  {type:'train', from:'Bar', to:'Budva', when:'24 Jul', note:'Curto, junto à costa. Comprar na hora?'},
+  {type:'train', from:'Budva', to:'Split', when:'26 Jul', note:'Subir a costa adriática.'},
+  {type:'night', from:'Split', to:'Zagreb', when:'28 → 29 Jul', note:'Último comboio noturno do interrail.'},
+  {type:'fly', from:'Zagreb', to:'Madrid', when:'30 Jul · 11:10 → 14:05', note:'Voo de regresso com escala longa em Madrid.'},
+  {type:'fly', from:'Madrid', to:'Porto', when:'30 Jul · 23:30 → 23:50', note:'Voo final para casa.'},
+];
+
+const concerts = [
+  {name:'Jazz Fest Wien', loc:'Viena 🇦🇹'},
+  {name:'Bohemia Jazz Fest', loc:'Praga 🇨🇿'},
+  {name:'KotorArt Festival', loc:'Kotor 🇲🇪'},
+];
+const activities = [
+  {emoji:'🪂', name:'Bungee Jump', loc:'Belgrado', price:'50–60 €'},
+  {emoji:'🌊', name:'Aqua Ski', loc:'Belgrado', price:'20–25 €'},
+  {emoji:'🛶', name:'Caiaques', loc:'Veliko Ratno Ostrvo, Sérvia', price:'10–15 €'},
+  {emoji:'🚤', name:'SpeedBoat', loc:'Kotor', price:'35–45 €'},
+  {emoji:'🛷', name:'Bobsleigh', loc:'Praga', price:'3–4 €'},
+  {emoji:'🏄', name:'Wakeboard & Kitesurf', loc:'Lago Balaton', price:'15–25 €'},
+  {emoji:'🧗', name:'Zipline', loc:'Split', price:'65–75 €'},
+];
+
+const packing = [
+  {cat:'🎒 Mochila & Roupa', items:['Roupa','Outra Mochila / Mochila Compacta','Chinelos','Óculos de sol','Saco de Vácuo','Molas']},
+  {cat:'🧼 Higiene & Saúde', items:['Toalha','Toalha de fibra','Álcool gel','Shampoo seco','Batom cieiro','Fisiocrem','Mini kit primeiros socorros','Pensos rápidos','Tampões para ouvidos']},
+  {cat:'🍴 Comida & Hidratação', items:['Tupperwares','Talheres','Garrafa de água fixe']},
+  {cat:'📷 Tech', items:['GoPro','Cabos']},
+  {cat:'🎉 Extras fixes', items:['Cartas','Caneta e papel','Saquinhos do aeroporto','Cadeados','Bandeira','Livro 🤡']},
+];
+
+/* ===================== RENDER ===================== */
+// board (hero)
+const boardEl = document.getElementById('board');
+const boardSeq = ['viena','praga','lyon','budapeste','belgrado','bar','budva','split','zagreb','madrid'];
+const moveType = {praga:'train',lyon:'train',budapeste:'train',belgrado:'train',bar:'night',budva:'train',split:'train',zagreb:'night',madrid:'fly'};
+boardSeq.forEach((k,i)=>{
+  const s = stops.find(x=>x.key===k);
+  if(i>0){
+    const t = moveType[k] || 'train';
+    const arr = document.createElement('span');
+    arr.className = 'board-arrow ' + (t==='night'?'night':t==='fly'?'fly':'');
+    arr.textContent = t==='fly' ? '✈' : t==='night' ? '⇢' : '→';
+    boardEl.appendChild(arr);
+  }
+  const chip = document.createElement('span');
+  chip.className='board-chip';
+  chip.textContent = s.flag+' '+s.name;
+  boardEl.appendChild(chip);
+});
+
+// calendar
+const dows = ['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'];
+const dowEl = document.getElementById('cal-dows');
+dows.forEach(d=>{const e=document.createElement('div');e.className='cal-dow';e.textContent=d;dowEl.appendChild(e);});
+const gridEl = document.getElementById('cal-grid');
+// 1 Jul 2026 = quarta (índice 2 numa semana Seg=0)
+const startOffset = 2;
+for(let i=0;i<startOffset;i++){const e=document.createElement('div');e.className='cell empty';gridEl.appendChild(e);}
+for(let day=1;day<=31;day++){
+  const cell=document.createElement('div');
+  const info=dayMap[day];
+  cell.dataset.day=day;
+  if(info){
+    cell.className='cell trip' + (info.night?' nightday':'');
+    cell.style.background=countryColors[info.country];
+    cell.tabIndex=0; cell.setAttribute('role','button');
+    cell.setAttribute('aria-label', day+' Julho · '+info.label+(info.night?' · comboio noturno à noite':''));
+    cell.innerHTML=`${info.night?'<span class="moon" title="Comboio noturno à noite">🌙</span>':''}<span class="dnum">${day}</span><span class="dcity">${info.label}</span>`;
+    const go=()=>{const t=document.getElementById('d'+day); if(t) t.scrollIntoView({behavior:'smooth',block:'center'});};
+    cell.addEventListener('click',go);
+    cell.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();go();}});
+  } else {
+    cell.className='cell pre';
+    cell.innerHTML=`<span class="dnum">${day}</span>`;
+  }
+  gridEl.appendChild(cell);
+}
+// legend (por país + comboio noturno)
+const legEl=document.getElementById('cal-legend');
+['Áustria','Chéquia','França','Hungria','Sérvia','Montenegro','Croácia','Espanha'].forEach(c=>{
+  const s=document.createElement('span');
+  s.innerHTML=`<i class="dot" style="background:${countryColors[c]}"></i>${countryFlags[c]} ${c}`;
+  legEl.appendChild(s);
+});
+const ns=document.createElement('span');
+ns.innerHTML=`<i class="dot" style="background:${nightColor}"></i>🌙 Comboio noturno`;
+legEl.appendChild(ns);
+
+// grafismo de comboio noturno entre duas casas
+function placeNightConnectors(){
+  gridEl.querySelectorAll('.nt-connector').forEach(n=>n.remove());
+  [[23,24],[28,29]].forEach(([a,b])=>{
+    const ca=gridEl.querySelector('[data-day="'+a+'"]');
+    const cb=gridEl.querySelector('[data-day="'+b+'"]');
+    if(!ca||!cb) return;
+    const midX=(ca.offsetLeft+ca.offsetWidth+cb.offsetLeft)/2;
+    const midY=ca.offsetTop+ca.offsetHeight/2;
+    const el=document.createElement('div');
+    el.className='nt-connector';
+    el.title='Comboio noturno — dormem a bordo até de manhã';
+    el.innerHTML='🌙🚆';
+    el.style.left=midX+'px';
+    el.style.top=midY+'px';
+    gridEl.appendChild(el);
+  });
+}
+placeNightConnectors();
+window.addEventListener('resize',()=>{clearTimeout(window._ntT);window._ntT=setTimeout(placeNightConnectors,120);});
+window.addEventListener('load',()=>setTimeout(placeNightConnectors,200));
+
+// itinerary rail
+const railEl=document.getElementById('rail');
+const tagClass={fly:'fly',move:'move',night:'night',stay:'stay'};
+const tagLabel={fly:'Voo',move:'Viagem',night:'Noturno',stay:'Estadia'};
+itinerary.forEach(it=>{
+  const leg=document.createElement('div');
+  leg.className='leg ' + (it.type==='night'?'night':(it.type==='move'||it.type==='fly')?'travel':'');
+  const color=countryColors[cityCountry[it.city]]||nightColor;
+  leg.innerHTML=`
+    <div class="date">${it.d}<br>Jul</div>
+    <div class="dot-st" style="${it.type==='stay'?('border-color:'+color):''}"></div>
+    <div class="leg-card" id="d${it.d}">
+      <div class="lc-top">
+        <h3>${it.title}</h3>
+        <span class="tag ${tagClass[it.type]}">${tagLabel[it.type]}</span>
+      </div>
+      ${it.when?`<div class="when">${it.when}</div>`:''}
+      <p>${it.txt}</p>
+      ${it.crew?`<span class="crew">👥 ${it.crew}</span>`:''}
+    </div>`;
+  railEl.appendChild(leg);
+});
+
+// stays
+const staysEl=document.getElementById('stays');
+stays.forEach(s=>{
+  const card=document.createElement('div');
+  card.className='stay reveal';
+  card.style.setProperty('--accent', s.acc);
+  let links='';
+  if(s.book) links+=`<a class="a-book" href="${s.book}" target="_blank" rel="noopener">${s.plat||'Reserva'} ↗</a>`;
+  if(s.map) links+=`<a class="a-map" href="${s.map}" target="_blank" rel="noopener">📍 Mapa</a>`;
+  card.innerHTML=`
+    <div class="s-city">${s.city}</div>
+    <div class="s-nights">${s.nights}</div>
+    <div class="s-price">${s.price}</div>
+    <div class="s-row"><span>Check-in</span><span>${s.checkin}</span></div>
+    <div class="s-row"><span>Check-out</span><span>${s.checkout}</span></div>
+    <div class="s-fac">${s.fac}</div>
+    <div class="s-links">${links||'<span style="font-family:var(--mono);font-size:.72rem;color:#888;">A definir</span>'}</div>`;
+  staysEl.appendChild(card);
+});
+
+// tickets
+const tkEl=document.getElementById('tickets');
+const tkStrip={train:'t-train',night:'t-night',fly:'t-fly'};
+const tkIcon={train:'🚆',night:'🌙',fly:'✈️'};
+const tkName={train:'Comboio',night:'Comboio noturno',fly:'Voo'};
+tickets.forEach(t=>{
+  const c=document.createElement('div');
+  c.className='ticket reveal';
+  c.innerHTML=`
+    <div class="t-strip ${tkStrip[t.type]}"><span>${tkIcon[t.type]} ${tkName[t.type]}</span><span>${t.when||t.who||''}</span></div>
+    <div class="t-body">
+      <div class="t-route">${t.from} <span class="arr">→</span> ${t.to}</div>
+      <div class="t-note">${t.note}</div>
+      ${t.warn?`<div class="t-note warn">⚠ ${t.warn}</div>`:''}
+      ${t.link?`<a class="t-link" href="${t.link}" target="_blank" rel="noopener">Comprar bilhete ↗</a>`:''}
+    </div>`;
+  tkEl.appendChild(c);
+});
+
+// concerts + activities
+const concEl=document.getElementById('concerts');
+concerts.forEach(c=>{
+  const e=document.createElement('div');e.className='conc';
+  e.innerHTML=`<div class="c-name">🎷 ${c.name}</div><div class="c-loc">${c.loc}</div>`;
+  concEl.appendChild(e);
+});
+const actEl=document.getElementById('activities');
+activities.forEach(a=>{
+  const e=document.createElement('div');e.className='fun';
+  e.innerHTML=`<div class="f-emoji">${a.emoji}</div><div class="f-name">${a.name}</div><div class="f-loc">📍 ${a.loc}</div><div class="f-price">${a.price}</div>`;
+  actEl.appendChild(e);
+});
+
+// packing
+const packEl=document.getElementById('packing');
+let totalItems=0;
+packing.forEach((g,gi)=>{
+  const cat=document.createElement('div');cat.className='pack-cat';
+  let html=`<h4>${g.cat}</h4>`;
+  g.items.forEach((it,ii)=>{
+    totalItems++;
+    const id=`p${gi}_${ii}`;
+    html+=`<label class="pitem" for="${id}"><input type="checkbox" id="${id}" class="pck"><span class="pbox"></span><span class="ptxt">${it}</span></label>`;
+  });
+  cat.innerHTML=html;
+  packEl.appendChild(cat);
+});
+document.getElementById('packtotal').textContent=totalItems;
+const bar=document.getElementById('packbar');
+const done=document.getElementById('packdone');
+function updatePack(){
+  const checked=document.querySelectorAll('.pck:checked').length;
+  done.textContent=checked;
+  bar.style.width=(checked/totalItems*100)+'%';
+}
+document.querySelectorAll('.pck').forEach(c=>c.addEventListener('change',updatePack));
+
+/* ===================== MAPA ===================== */
+window.addEventListener('load',()=>{
+  try{
+    const map=L.map('map',{scrollWheelZoom:false}).setView([45.0,16.0],4.4);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{
+      attribution:'© OpenStreetMap © CARTO', maxZoom:19, subdomains:'abcd'
+    }).addTo(map);
+
+    // marcadores numerados (exclui balaton da numeração principal)
+    const numbered=stops.filter(s=>s.key!=='balaton');
+    numbered.forEach((s,i)=>{
+      const icon=L.divIcon({className:'',html:`<div class="pin" style="background:${s.hex}"><span>${i+1}</span></div>`,iconSize:[30,30],iconAnchor:[15,30],popupAnchor:[0,-30]});
+      L.marker([s.lat,s.lng],{icon}).addTo(map)
+        .bindPopup(`<div class="map-pop"><b>${s.flag} ${s.name}</b><span class="mp-dates">${s.country} · ${s.dates}</span></div>`);
+    });
+    // balaton marker pequeno
+    const bal=stops.find(s=>s.key==='balaton');
+    L.circleMarker([bal.lat,bal.lng],{radius:7,color:'#fff',weight:2,fillColor:bal.hex,fillOpacity:1}).addTo(map)
+      .bindPopup(`<div class="map-pop"><b>🏖️ Lago Balaton</b><span class="mp-dates">Bate-volta · 20 Jul</span></div>`);
+
+    const P=k=>{const s=stops.find(x=>x.key===k);return [s.lat,s.lng];};
+    // troços de comboio de dia
+    const dayTrain=[['viena','praga'],['praga','lyon'],['lyon','budapeste'],['bar','budva'],['budva','split']];
+    dayTrain.forEach(seg=>L.polyline([P(seg[0]),P(seg[1])],{color:'#FFB13C',weight:3.5}).addTo(map));
+    // balaton bate-volta
+    L.polyline([P('budapeste'),[bal.lat,bal.lng]],{color:'#42B3AC',weight:2.5,dashArray:'2 6'}).addTo(map);
+    // noturnos
+    L.polyline([P('budapeste'),P('belgrado')],{color:'#FFB13C',weight:3.5}).addTo(map);
+    L.polyline([P('belgrado'),P('bar')],{color:'#7B5EA7',weight:3.5,dashArray:'9 7'}).addTo(map);
+    L.polyline([P('split'),P('zagreb')],{color:'#7B5EA7',weight:3.5,dashArray:'9 7'}).addTo(map);
+    // voos
+    L.polyline([P('zagreb'),P('madrid')],{color:'#FF5A5F',weight:3,dashArray:'2 8'}).addTo(map);
+    L.polyline([P('madrid'),[porto.lat,porto.lng]],{color:'#FF5A5F',weight:3,dashArray:'2 8'}).addTo(map);
+    // porto marker pequeno
+    L.circleMarker([porto.lat,porto.lng],{radius:6,color:'#fff',weight:2,fillColor:'#0E1330',fillOpacity:1}).addTo(map)
+      .bindPopup(`<div class="map-pop"><b>🏠 Porto</b><span class="mp-dates">Casa · regresso 30 Jul</span></div>`);
+
+    map.fitBounds(L.latLngBounds(numbered.map(s=>[s.lat,s.lng]).concat([[porto.lat,porto.lng]])).pad(0.12));
+    map.on('click',()=>map.scrollWheelZoom.enable());
+    map.on('mouseout',()=>map.scrollWheelZoom.disable());
+  }catch(e){
+    document.getElementById('map').innerHTML='<div style="padding:2rem;color:#fff;font-family:var(--mono);font-size:.85rem;">Não foi possível carregar o mapa (sem ligação à internet). Consulta os links de localização em cada alojamento.</div>';
+  }
+});
+
+/* ===================== DESPESAS ===================== */
+const eur = x => x.toFixed(2).replace('.',',')+' €';
+const expAcc = [
+  {place:'Viena',                  total:140.28, n:2, who:'Cruz + Guilherme'},
+  {place:'Praga',                  total:57.19,  n:2, who:'Cruz + Guilherme'},
+  {place:'Lyon',                   total:0,      n:2, who:'Cruz + Guilherme'},
+  {place:'Budapeste · 1ª noite',   total:54.30,  n:2, who:'Cruz + Guilherme'},
+  {place:'Budapeste · apartamento',total:220,    n:4, who:'Todos'},
+  {place:'Belgrado',               total:56.29,  n:4, who:'Todos'},
+  {place:'Budva',                  total:198,    n:4, who:'Todos'},
+  {place:'Split',                  total:226.75, n:4, who:'Todos'},
+  {place:'Zagreb',                 total:64,     n:4, who:'Todos'},
+];
+const pay={Cruz:0,Guilherme:0,Kulzer:0,'Poças':0};
+expAcc.forEach(e=>{
+  const per=e.total/e.n;
+  pay.Cruz+=per; pay.Guilherme+=per;
+  if(e.n===4){ pay.Kulzer+=per; pay['Poças']+=per; }
+});
+const totalAll=expAcc.reduce((s,e)=>s+e.total,0);
+
+const peopleMeta=[
+  {name:'Cruz',      color:'#E8A33D', tag:'Viagem completa'},
+  {name:'Guilherme', color:'#3F62C4', tag:'Viagem completa'},
+  {name:'Kulzer',    color:'#14A8A0', tag:'A partir de 19 Jul'},
+  {name:'Poças',     color:'#E8772E', tag:'A partir de 19 Jul'},
+];
+const cpEl=document.getElementById('costPeople');
+peopleMeta.forEach(p=>{
+  const d=document.createElement('div');
+  d.className='cost-person reveal';
+  d.style.setProperty('--pc', p.color);
+  d.innerHTML=`<div class="avatar">${p.name[0]}</div><div class="cp-name">${p.name}</div><div class="cp-amount">${eur(pay[p.name])}</div><span class="cp-tag">${p.tag}</span>`;
+  cpEl.appendChild(d);
+});
+const tb=document.querySelector('#costTable tbody');
+expAcc.forEach(e=>{
+  const tr=document.createElement('tr');
+  tr.innerHTML=`<td>${e.place}</td><td>${eur(e.total)}</td><td>÷ ${e.n}</td><td>${eur(e.total/e.n)}</td><td>${e.who}</td>`;
+  tb.appendChild(tr);
+});
+document.querySelector('#costTable tfoot').innerHTML=
+  `<tr><td>Total alojamento</td><td>${eur(totalAll)}</td><td></td><td></td><td></td></tr>`;
+
+/* ===================== REVEAL ===================== */
+const io=new IntersectionObserver((ents)=>{
+  ents.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}});
+},{threshold:.12});
+document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+</script>
+</body>
+</html>
